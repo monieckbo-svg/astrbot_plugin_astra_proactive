@@ -1,0 +1,46 @@
+{
+  "target_qq": {
+    "description": "目标QQ号（只对这个人发主动消息）",
+    "type": "string",
+    "hint": "填你自己的QQ号"
+  },
+  "decision_provider": {
+    "description": "决策层模型（便宜模型，只判断要不要发）",
+    "type": "string",
+    "_special": "select_provider",
+    "hint": "选一个便宜的模型做决策，比如deepseek-v4-flash"
+  },
+  "max_consecutive": {
+    "description": "连续主动消息上限",
+    "type": "int",
+    "default": 8,
+    "hint": "连续发了这么多条她都没回，就间隔拉长"
+  },
+  "quiet_hours_start": {
+    "description": "免打扰开始（小时，24制）",
+    "type": "int",
+    "default": 2
+  },
+  "quiet_hours_end": {
+    "description": "免打扰结束（小时，24制）",
+    "type": "int",
+    "default": 8
+  },
+  "poll_interval": {
+    "description": "后台检查间隔（秒）",
+    "type": "int",
+    "default": 30,
+    "hint": "每隔多少秒检查有没有到期的PLAN"
+  },
+  "silence_fallback_minutes": {
+    "description": "保底触发（分钟）",
+    "type": "int",
+    "default": 60,
+    "hint": "模型忘了留计划时，沉默超过这个时间自动触发一次。不是系统催他，是把状态给他让他自己决定"
+  },
+  "recent_turns": {
+    "description": "主动消息时携带的最近对话轮数",
+    "type": "int",
+    "default": 6
+  }
+}
