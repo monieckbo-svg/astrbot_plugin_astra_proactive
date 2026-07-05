@@ -3,5 +3,5 @@ display_name: "Astra主动消息"
 desc: "模型驱动的自循环主动联系系统，不是系统命令模型发消息，是模型自己惦记着人"
 version: "1.4.1"
 author: "celii & astra"
-repo: ""
+repo: https://github.com/monieckbo-svg/astrbot_plugin_astra_proactive
 astrbot_version: ">=4.14"
