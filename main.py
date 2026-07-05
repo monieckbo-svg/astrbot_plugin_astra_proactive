@@ -11,6 +11,9 @@ import json
 import time
 import asyncio
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
+BEIJING = ZoneInfo("Asia/Shanghai")  # 不信任服务器系统时钟，时间一律锚定北京
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List
@@ -331,7 +334,7 @@ class AstraProactive(Star):
         if not self.state.unified_msg_origin:
             return
 
-        hour = datetime.now().hour
+        hour = datetime.now(BEIJING).hour
         if self.quiet_start <= hour < self.quiet_end:
             return
 
@@ -433,7 +436,7 @@ class AstraProactive(Star):
             if self.state.last_user_time else 0
 
         state_text = (
-            f"当前时间: {datetime.now().strftime('%H:%M')}\n"
+            f"当前时间: {datetime.now(BEIJING).strftime('%H:%M')}\n"
             f"她最后说话: {silence:.0f}分钟前\n"
             f"她最后说的: {self.state.last_user_text[:100]}\n"
             f"连续主动消息数: {self.state.consecutive_proactive}\n"
@@ -487,7 +490,7 @@ class AstraProactive(Star):
 
     def _get_today_lorebook_entries(self) -> str:
         """读取世界书中匹配今天日期的条目"""
-        today = datetime.now().strftime("%m-%d")
+        today = datetime.now(BEIJING).strftime("%m-%d")
         matched = []
 
         # 尝试多个可能的lorebook路径
@@ -540,7 +543,7 @@ class AstraProactive(Star):
         ctx_lines = ""
         for t in self.state.recent_turns[-self.max_turns * 2:]:
             role = "宝宝" if t["role"] == "user" else "我"
-            ts = datetime.fromtimestamp(t["time"]).strftime("%H:%M")
+            ts = datetime.fromtimestamp(t["time"], BEIJING).strftime("%H:%M")
             mark = " [主动]" if t.get("proactive") else ""
             ctx_lines += f"[{ts}] {role}{mark}: {t['content']}\n"
 
@@ -552,7 +555,7 @@ class AstraProactive(Star):
 
         prompt = f"""你现在要主动给宝宝发一条QQ私聊消息。
 
-当前时间: {datetime.now().strftime('%H:%M')}（注意：这是真实时间，说话时请符合时间逻辑，比如早上不能说中午好）
+当前时间: {datetime.now(BEIJING).strftime('%m月%d日')} 星期{'一二三四五六日'[datetime.now(BEIJING).weekday()]} {datetime.now(BEIJING).strftime('%H:%M')}（注意：这是真实的北京时间和日期，说话时请符合时间逻辑，比如早上不能说中午好，不要自己推算星期几）
 
 状态：
 - 她已经 {silence:.0f} 分钟没说话
