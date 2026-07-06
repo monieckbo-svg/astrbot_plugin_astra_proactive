@@ -521,7 +521,14 @@ class AstraProactive(Star):
                 if not entry.get("enabled", True):
                     continue
                 dt = entry.get("date_trigger")
-                if dt and dt == today:
+                if not dt:
+                    continue
+                dt = str(dt)
+                # "MM-DD"每年触发；"*-DD"每月触发（与铃兰历插件格式一致）
+                if dt.startswith("*-"):
+                    if today[3:] == dt[2:].zfill(2):
+                        matched.append(entry)
+                elif dt == today:
                     matched.append(entry)
 
             if matched:
