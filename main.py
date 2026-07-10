@@ -311,6 +311,11 @@ class AstraProactive(Star):
     async def _check_plans(self):
         now = time.time()
 
+        # 失败熔断：LLM渠道故障（如中转站502）期间全体静默，
+        # 不造plan不调用不发消息，等渠道自己活过来
+        if now < getattr(self, "_llm_fail_until", 0):
+            return
+
         # 保底：队列空、模型忘了留plan、沉默超过阈值
         if not self.plans and self.state.last_user_time > 0:
             silence = now - max(self.state.last_user_time, self.state.last_bot_time)
@@ -473,16 +478,10 @@ class AstraProactive(Star):
             content = content.strip().strip("```json").strip("```").strip()
             return _robust_json_parse(content)
         except Exception as e:
-            logger.error(f"[AstraProactive] 决策失败: {e}")
-            try:
-                if self.state.unified_msg_origin:
-                    chain = MessageChain().message(f"[proactive决策层] {e}")
-                    await self.context.send_message(
-                        self.state.unified_msg_origin, chain
-                    )
-            except Exception:
-                pass
-            return {"send": False, "wait_minutes": 10}
+            # 只进日志不进QQ（原调试后门已拆），并熔断30分钟
+            logger.error(f"[AstraProactive] 决策失败: {e}，熔断30分钟")
+            self._llm_fail_until = time.time() + 1800
+            return {"send": False, "wait_minutes": 30}
 
     # ─────────────────────────────────────
     # 生成层
@@ -601,16 +600,10 @@ next_minutes是下次间隔，null表示暂停等她回。
                 result.get("next_minutes")
             )
         except Exception as e:
-            logger.error(f"[AstraProactive] 生成失败: {e}")
-            # 直接把报错发过去
-            try:
-                if self.state.unified_msg_origin:
-                    chain = MessageChain().message(f"[proactive生成层] {e}")
-                    await self.context.send_message(
-                        self.state.unified_msg_origin, chain
-                    )
-            except Exception:
-                pass
+            # 只进日志不进QQ（原调试后门已拆——它曾在中转站502时
+            # 化身机枪对她连发报错），并熔断30分钟
+            logger.error(f"[AstraProactive] 生成失败: {e}，熔断30分钟")
+            self._llm_fail_until = time.time() + 1800
             return (None, None, None)
 
     # ─────────────────────────────────────
